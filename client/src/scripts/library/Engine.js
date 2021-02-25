@@ -1,84 +1,82 @@
-/**
- * iClusterDev 2021
- *
- * This is a fixed time step game loop.
- * can be used for any game and ensure that the game state is
- * updated at the same timestep across different devices.
- * This will ensure a consistent gameplay experience.
- * In case of slow devices, a memory spiral catch is in place
- * to never allow three full frames passing without an update
- */
 class Engine {
-  constructor(update, render) {
-    this._frameRequest = null;
-    this._currentTime = null;
-    this._elapsedTime = 0;
-    this._timeStep = 1000 / 60;
-    this._updated = false;
-    this._updates = 0;
-    this._update = update;
-    this._render = render;
-    this._panic = () => console.log('PANIC!');
+  #frameRequest;
+  #currentTime;
+  #elapsedTime;
+  #timeStep;
+  #updated;
+  #updates;
+  #update;
+  #render;
+  #panic;
 
-    this._framesThisSecond = 0;
-    this._lastFpsUpdate = 0;
-    this._fps = 60;
+  /**
+   * Fixed time step game engine (Singleton).
+   *
+   * Can be used for any game and ensures that the game state is
+   * updated at the same timestep across different devices.
+   * In case of slow devices, a memory spiral catch is in place
+   * to never allow three full frames passing without an update.
+   * @param {Function} update - update function
+   * @param {Function} render - render function
+   */
+  constructor(update = () => {}, render = () => {}) {
+    if (Engine.instance) {
+      return Engine.instance;
+    } else {
+      this.#frameRequest = null;
+      this.#currentTime = null;
+      this.#elapsedTime = 0;
+      this.#timeStep = 1000 / 60;
+      this.#updated = false;
+      this.#updates = 0;
+      this.#update = update;
+      this.#render = render;
+      this.#panic = () => console.log('PANIC!');
+
+      Engine.instance = this;
+      return Engine.instance;
+    }
   }
 
-  run(timestamp) {
-    if (!this._currentTime) this._currentTime = window.performance.now();
-    this._frameRequest = window.requestAnimationFrame((timestamp) => {
-      this.run(timestamp);
+  #run(timestamp) {
+    if (!this.#currentTime) this.#currentTime = window.performance.now();
+    this.#frameRequest = window.requestAnimationFrame((timestamp) => {
+      this.#run(timestamp);
     });
 
-    this._elapsedTime += timestamp - this._currentTime;
-    this._currentTime = timestamp;
-    this._updates = 0;
+    this.#elapsedTime += timestamp - this.#currentTime;
+    this.#currentTime = timestamp;
+    this.#updates = 0;
 
-    if (this._elapsedTime >= this._timeStep * 3) {
-      this._elapsedTime = this._timeStep;
+    if (this.#elapsedTime >= this.#timeStep * 3) {
+      this.#elapsedTime = this.#timeStep;
     }
 
-    while (this._elapsedTime >= this._timeStep) {
-      this._elapsedTime -= this._timeStep;
-      this._update(this._timeStep);
-      if (++this._updates > 2) {
-        this._panic();
+    while (this.#elapsedTime >= this.#timeStep) {
+      this.#elapsedTime -= this.#timeStep;
+      this.#update(this.#timeStep);
+      if (++this.#updates > 2) {
+        this.#panic();
         break;
       }
-      this._updated = true;
+      this.#updated = true;
     }
 
-    if (this._updated) {
-      this._render();
-      this._updated = false;
+    if (this.#updated) {
+      this.#render();
+      this.#updated = false;
     }
-  }
-
-  debug() {
-    if (this._currentTime > this._lastFpsUpdate + 1000) {
-      this._fps = 0.25 * this._framesThisSecond + 0.75 * this._fps;
-      this._lastFpsUpdate = this._currentTime;
-      this._framesThisSecond = 0;
-    }
-    this._framesThisSecond++;
-    return {
-      updates: this._updates,
-      elapsedTime: this._elapsedTime,
-      currentTime: this._currentTime,
-      fps: this._fps,
-    };
   }
 
   start() {
-    this._currentTime = window.performance.now();
-    this._frameRequest = window.requestAnimationFrame((timestamp) => {
-      this.run(timestamp);
+    this.#currentTime = window.performance.now();
+    this.#frameRequest = window.requestAnimationFrame((timestamp) => {
+      this.#run(timestamp);
     });
   }
 
   stop() {
-    window.cancelAnimationFrame(this._frameRequest);
+    window.cancelAnimationFrame(this.#frameRequest);
   }
 }
 

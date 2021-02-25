@@ -1,3 +1,7 @@
-import HelloWorld from './components/HelloWorld';
+import Engine from './library/Engine';
+import display from './components/display';
 
-HelloWorld.hello();
+const engine = new Engine(
+  () => {},
+  () => console.log('running')
+);

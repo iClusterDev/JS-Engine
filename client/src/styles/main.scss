@@ -1,6 +1,15 @@
 $color-text: rgb(14, 14, 14);
 
 body {
-  background-color: rgb(182, 213, 237);
+  background-color: black;
   color: $color-text;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+#display {
+  border: solid 1px white;
 }
